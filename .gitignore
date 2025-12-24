@@ -1,0 +1,11 @@
+dataset/*
+eval_results/*
+logs/*
+outputs/*
+
+__pycache__
+
+.DS_Store
+
+help.ipynb
+config.yaml

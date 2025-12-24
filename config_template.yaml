@@ -1,0 +1,17 @@
+paths:
+  output_root: "./outputs"
+
+# --- 模型特定配置区 ---
+
+# 1. Gemini 配置块
+nanobanana1_model:
+  base_url: "http://xxx:yyyy"
+  api_key: "sk-zzz"
+  generation_model_name: "gemini-2.5-flash-image-preview"
+  understanding_model_name: "gemini-2.5-flash"
+
+nanobanana2_model:
+  base_url: "http://xxx:yyyy"
+  api_key: "sk-zzz"
+  generation_model_name: "gemini-3-pro-image-preview"
+  understanding_model_name: "gemini-3-pro"
