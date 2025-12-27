@@ -26,7 +26,8 @@ def dataset_input_content_process(content: str, image_dir: str = "./images"):
         if content in image_placeholders:
             user_content.append({"image": image_paths[content]})
         else:
-            user_content.append({"text": content})
+            if content != "":
+                user_content.append({"text": content})
     
     return user_content
 
