@@ -11,7 +11,7 @@ from src.utils.logger import setup_logger
 from src.models.base_model import BaseImageGenerator
 from src.models.gemini_v1 import GeminiGenerator
 from src.models.bagel import BagelGenerator
-
+from MoT_capture import *
 
 def get_image_generator(model_type: str, config: dict, logger) -> BaseImageGenerator:
     """初始化模型工厂函数"""
@@ -143,6 +143,10 @@ def run_generation(args, **kwargs):
 
     # 4. 初始化模型
     generator = get_image_generator(args.model, config, logger)
+    if args.model=='bagel_origin':
+        attention_capture = MOTAttentionCapture()
+        attention_capture.attach_hooks(generator.model)
+        print('Success to attach hooks.')
     if not generator:
         logger.error("Failed to initialize generator. Exiting.")
         return
@@ -195,7 +199,10 @@ def run_generation(args, **kwargs):
         
         for item in tqdm(data_items, desc="Generating (Sequential)"):
             status, cid, msg = process_one_case(item, generator, output_dir, source_images_dir, **kwargs)
-            
+            attention_data = attention_capture.get_attention_data()
+            print(f'catch {len(attention_data)} data')
+            for k,v in attention_data.items():
+                print(k,v['input'].shape,v['output'].shape)
             if status == "success":
                 success_count += 1
                 logger.info(f"[Success] Case {cid}: {msg}")
@@ -217,11 +224,11 @@ def run_generation(args, **kwargs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run image generation benchmark.")
     
-    parser.add_argument("--config_file", type=str, default="config.yaml",
+    parser.add_argument("--config_file", type=str, default="config_template.yaml",
                         help="Path to the config file.")    
     parser.add_argument("--model", type=str, required=True, choices=["nanobanana1", "nanobanana2", "bagel_origin"], 
                         help="The model type to run.")
-    parser.add_argument("--dim", type=str, default="dimension_visual_link", 
+    parser.add_argument("--dim", type=str, default="dimension_tiny", 
                         help="The dimension folder name under dataset/.")
     parser.add_argument("--exp_name", type=str, default="bagel_none_think", 
                         help="Experiment name for output folder.")
@@ -231,3 +238,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_generation(args)
+
