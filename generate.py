@@ -198,7 +198,7 @@ if __name__ == "__main__":
     
     parser.add_argument("--config_file", type=str, default="config.yaml",
                         help="Path to the config file.")    
-    parser.add_argument("--model", type=str, required=True, choices=["nanobanana1", "nanobanana2"], 
+    parser.add_argument("--model", type=str, required=True, 
                         help="The model type to run.")
     parser.add_argument("--dim", type=str, default="dimension_visual_link", 
                         help="The dimension folder name under dataset/.")
