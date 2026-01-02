@@ -10,7 +10,8 @@ from src.utils.logger import setup_logger
 
 from src.models.base_model import BaseImageGenerator
 from src.models.gemini_v1 import GeminiGenerator
-
+from src.models.bagel import BagelGenerator
+from MoT_capture import *
 
 def get_image_generator(model_type: str, config: dict, logger) -> BaseImageGenerator:
     """初始化模型工厂函数"""
@@ -49,7 +50,22 @@ def get_image_generator(model_type: str, config: dict, logger) -> BaseImageGener
         except KeyError as e:
             logger.error(f"Missing key in nanobanana2_model config: {e}")
             return None
-            
+    
+    elif model_type == "bagel_origin":
+        logger.info("Initializing Bagel Origin Model...")
+        cfg = config.get("bagel_origin_model")
+        if not cfg:
+            logger.error("Config missing 'bagel_origin_model' section!")
+            return None
+        try:
+            generator = BagelGenerator(
+                model_path=cfg['model_path'],
+                think_understand=cfg['think_understand'],
+                think_generation=cfg['think_generation'],
+            )
+        except KeyError as e:
+            logger.error(f"Missing key in bagel_origin_model config: {e}")
+            return None
     else:
         logger.error(f"Unknown model type: {model_type}")
         return None
@@ -58,7 +74,11 @@ def get_image_generator(model_type: str, config: dict, logger) -> BaseImageGener
     return generator
 
 
-def process_one_case(item: dict, generator: BaseImageGenerator, output_dir: str, source_images_dir: str):
+def process_one_case(item: dict, 
+                     generator: BaseImageGenerator, 
+                     output_dir: str, 
+                     source_images_dir: str,
+                     **kwargs):
     """
     处理单条数据的原子函数，用于多线程调用。
     返回: (status, case_id, message/result)
@@ -81,14 +101,15 @@ def process_one_case(item: dict, generator: BaseImageGenerator, output_dir: str,
             context=context,
             instruction=instruction,
             output_image_file=save_path,
-            source_image_dir=source_images_dir
+            source_image_dir=source_images_dir,
+            **kwargs
         )
         return "success", case_id, history_contents
     except Exception as e:
         return "fail", case_id, str(e)
 
 
-def run_generation(args):
+def run_generation(args, **kwargs):
     # 1. 初始化日志
     logger = setup_logger(f"gen_{args.model}_{args.dim}")
     logger.info(f"Starting Generation Pipeline...")
@@ -122,6 +143,10 @@ def run_generation(args):
 
     # 4. 初始化模型
     generator = get_image_generator(args.model, config, logger)
+    if args.model=='bagel_origin':
+        attention_capture = MOTAttentionCapture()
+        attention_capture.attach_hooks(generator.model)
+        print('Success to attach hooks.')
     if not generator:
         logger.error("Failed to initialize generator. Exiting.")
         return
@@ -145,7 +170,7 @@ def run_generation(args):
         with ThreadPoolExecutor(max_workers=args.num_workers) as executor:
             # 提交所有任务
             future_to_case = {
-                executor.submit(process_one_case, item, generator, output_dir, source_images_dir): item['id']
+                executor.submit(process_one_case, item, generator, output_dir, source_images_dir, **kwargs): item['id']
                 for item in data_items
             }
 
@@ -173,11 +198,14 @@ def run_generation(args):
         logger.info("Model identified as Local/Sequential Model. Running in main thread.")
         
         for item in tqdm(data_items, desc="Generating (Sequential)"):
-            status, cid, msg = process_one_case(item, generator, output_dir, source_images_dir)
-            
+            status, cid, msg = process_one_case(item, generator, output_dir, source_images_dir, **kwargs)
+            attention_data = attention_capture.get_attention_data()
+            print(f'catch {len(attention_data)} data')
+            for k,v in attention_data.items():
+                print(k,v['input'].shape,v['output'].shape)
             if status == "success":
                 success_count += 1
-                logger.info(f"[Success] Case {cid}")
+                logger.info(f"[Success] Case {cid}: {msg}")
             elif status == "skip":
                 skip_count += 1
             elif status == "fail":
@@ -196,13 +224,17 @@ def run_generation(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run image generation benchmark.")
     
-    parser.add_argument("--config_file", type=str, default="config.yaml",
+    parser.add_argument("--config_file", type=str, default="config_template.yaml",
                         help="Path to the config file.")    
+<<<<<<< HEAD
     parser.add_argument("--model", type=str, required=True, 
+=======
+    parser.add_argument("--model", type=str, required=True, choices=["nanobanana1", "nanobanana2", "bagel_origin"], 
+>>>>>>> 4dcacbda766454734fc098393350e7f4bd9f6af6
                         help="The model type to run.")
-    parser.add_argument("--dim", type=str, default="dimension_visual_link", 
+    parser.add_argument("--dim", type=str, default="dimension_tiny", 
                         help="The dimension folder name under dataset/.")
-    parser.add_argument("--exp_name", type=str, default="benchmark_v1", 
+    parser.add_argument("--exp_name", type=str, default="bagel_none_think", 
                         help="Experiment name for output folder.")
     parser.add_argument("--num_workers", type=int, default=20, 
                         help="Number of threads for API models. Ignored for local models.")
@@ -210,3 +242,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_generation(args)
+

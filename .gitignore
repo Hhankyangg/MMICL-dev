@@ -6,9 +6,15 @@ outputs/*
 __pycache__
 
 .DS_Store
+<<<<<<< HEAD
 
 *.ipynb
 config.yaml
 showcase
 *zip
 *.sh
+=======
+config.yaml
+help.ipynb
+*.zip
+>>>>>>> 4dcacbda766454734fc098393350e7f4bd9f6af6

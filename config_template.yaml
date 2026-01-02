@@ -15,3 +15,8 @@ nanobanana2_model:
   api_key: "sk-zzz"
   generation_model_name: "gemini-3-pro-image-preview"
   understanding_model_name: "gemini-3-pro"
+
+bagel_origin_model:
+  model_path: "/mnt/bn/yufei1900/public_weight/BAGEL-7B-MoT"
+  think_generation: True
+  think_understand: False
