@@ -11,6 +11,8 @@ from src.utils.logger import setup_logger
 from src.models.base_model import BaseImageGenerator
 from src.models.gemini_v1 import GeminiGenerator
 from src.models.bagel import BagelGenerator
+from src.models.gpt_interleaved import GPTImageInterleaved
+from src.models.gpt_edit import GPTEdit
 from MoT_capture import *
 
 def get_image_generator(model_type: str, config: dict, logger) -> BaseImageGenerator:
@@ -65,6 +67,56 @@ def get_image_generator(model_type: str, config: dict, logger) -> BaseImageGener
             )
         except KeyError as e:
             logger.error(f"Missing key in bagel_origin_model config: {e}")
+            return None
+    elif model_type == "gpt_interleaved":
+        logger.info("Initializing GPT Interleaved Model (Azure)...")
+        cfg = config.get("gpt_interleaved_model")
+        
+        if not cfg:
+            logger.error("Config missing 'gpt_interleaved_model' section!")
+            return None
+            
+        try:
+            # 根据 config 实例化类
+            generator = GPTImageInterleaved(
+                azure_endpoint=cfg['azure_endpoint'],
+                api_key=cfg.get('api_key'),
+                api_version=cfg.get('api_version', "2025-04-01-preview"),
+                deployment_name=cfg['deployment_name'],
+                timeout=cfg.get('timeout', 120),
+                max_retries=cfg.get('max_retries', 3),
+                max_image_size=cfg.get('max_image_size', 1500)
+            )
+        except KeyError as e:
+            logger.error(f"Missing key in gpt_interleaved_model config: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to init GPT model: {e}")
+            return None
+    elif model_type == "gpt_edit":
+        logger.info("Initializing GPT Edit Model (Azure)...")
+        cfg = config.get("gpt_edit_model")
+        
+        if not cfg:
+            logger.error("Config missing 'gpt_edit_model' section!")
+            return None
+            
+        try:
+            # 根据 config 实例化类
+            generator = GPTEdit(
+                azure_endpoint=cfg['azure_endpoint'],
+                api_key=cfg.get('api_key'),
+                api_version=cfg.get('api_version', "2025-04-01-preview"),
+                deployment_name=cfg['deployment_name'],
+                timeout=cfg.get('timeout', 120),
+                max_retries=cfg.get('max_retries', 3),
+                max_image_size=cfg.get('max_image_size', 1500)
+            )
+        except KeyError as e:
+            logger.error(f"Missing key in gpt_edit_model config: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to init GPT model: {e}")
             return None
     else:
         logger.error(f"Unknown model type: {model_type}")
@@ -226,11 +278,7 @@ if __name__ == "__main__":
     
     parser.add_argument("--config_file", type=str, default="config_template.yaml",
                         help="Path to the config file.")    
-<<<<<<< HEAD
     parser.add_argument("--model", type=str, required=True, 
-=======
-    parser.add_argument("--model", type=str, required=True, choices=["nanobanana1", "nanobanana2", "bagel_origin"], 
->>>>>>> 4dcacbda766454734fc098393350e7f4bd9f6af6
                         help="The model type to run.")
     parser.add_argument("--dim", type=str, default="dimension_tiny", 
                         help="The dimension folder name under dataset/.")

@@ -20,3 +20,21 @@ bagel_origin_model:
   model_path: "/mnt/bn/yufei1900/public_weight/BAGEL-7B-MoT"
   think_generation: True
   think_understand: False
+
+gpt_interleaved_model:
+  api_key: "sk-xxxxxxxxxxxxxxxxxxxxxxxx" 
+  azure_endpoint: "https://your-resource-name.openai.azure.com"
+  api_version: "2025-04-01-preview" 
+  deployment_name: "gpt-4.1"      
+  timeout: 120
+  max_retries: 3
+  max_image_size: 1500
+
+gpt_edit_model:
+  api_key: "sk-xxxxxxxxxxxxxxxxxxxxxxxx" 
+  azure_endpoint: "https://your-resource-name.openai.azure.com"
+  api_version: "2025-04-01-preview" 
+  deployment_name: "gpt-4.1"      
+  timeout: 120
+  max_retries: 3
+  max_image_size: 1500
